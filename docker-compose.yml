@@ -1,0 +1,51 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build: ./backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:////data/app.db
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - dbdata:/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: ./backend
+    command: python worker.py
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:////data/app.db
+      REDIS_URL: redis://redis:6379/0
+      WORKER_SLEEP_SECONDS: "3"
+      FAILURE_RATE: "0.15"
+    volumes:
+      - dbdata:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  dbdata:

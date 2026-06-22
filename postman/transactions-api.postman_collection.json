@@ -1,0 +1,67 @@
+{
+  "info": {
+    "name": "Transactional API (Technical Test)",
+    "description": "Endpoints for Parts 1 & 3. The real-time stream is a WebSocket at ws://localhost:8000/transactions/stream (use Postman's New > WebSocket Request, or the frontend).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" },
+    { "key": "idemKey", "value": "demo-key-001" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+      }
+    },
+    {
+      "name": "List transactions",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/transactions", "host": ["{{baseUrl}}"], "path": ["transactions"] }
+      }
+    },
+    {
+      "name": "Create transaction (idempotent)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Idempotency-Key", "value": "{{idemKey}}", "description": "Send the same key twice -> same row returned, no duplicate." }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"user-1\",\n  \"amount\": 100.5,\n  \"type\": \"credit\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/transactions/create", "host": ["{{baseUrl}}"], "path": ["transactions", "create"] }
+      }
+    },
+    {
+      "name": "Async process (queue + worker)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"user-2\",\n  \"amount\": 42.0,\n  \"type\": \"debit\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/transactions/async-process", "host": ["{{baseUrl}}"], "path": ["transactions", "async-process"] }
+      },
+      "response": []
+    },
+    {
+      "name": "Assistant summarize",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"FastAPI is a modern, fast web framework for building APIs with Python based on standard type hints. It offers automatic interactive documentation and high performance.\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/assistant/summarize", "host": ["{{baseUrl}}"], "path": ["assistant", "summarize"] }
+      }
+    }
+  ]
+}
